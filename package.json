@@ -1,0 +1,21 @@
+{
+  "name": "foodmitra-source-code",
+  "version": "1.0.0",
+  "description": "**FoodMitra** is a web-based platform built for **Tutedude's Web Development Hackathon 1.0** to solve the real-world problem of raw material sourcing for Indian street food vendors. It connects **street vendors** with **verified suppliers**, allowing easy, affordable, and trusted access to ingredients.",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheQuantumScripter/FoodMitra22.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/TheQuantumScripter/FoodMitra22/issues"
+  },
+  "homepage": "https://github.com/TheQuantumScripter/FoodMitra22#readme"
+}
