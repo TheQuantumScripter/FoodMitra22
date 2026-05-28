@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><title>Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { background: #f1f7ff; padding: 20px; font-family: 'Poppins', sans-serif; margin: 0; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 10px; margin-bottom: 20px; }
+    .container { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1200px; margin: auto; }
+    .panel { background: white; padding: 20px; border-radius: 10px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
+    th { background: #f8f9fa; color: #2887ff; }
+    .btn-sm { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
+    .bg-red { background: #ff4d4d; } .bg-blue { background: #2887ff; }
+    .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000000aa; justify-content:center; align-items:center;}
+    .modal-content { background:white; padding:30px; border-radius:12px; width:350px; }
+    .modal-content input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <div class="admin-header">
+    <h2 style="color:#2887ff; margin:0;">Admin Panel</h2>
+    <div><a href="index.html" class="btn-sm bg-blue" style="text-decoration:none; margin-right:10px;">Menu</a><button class="btn-sm bg-red" onclick="logoutUser()">Logout</button></div>
+  </div>
+
+  <div class="container">
+    <div class="panel">
+        <h3>Orders (Manage Delivery)</h3>
+        <table id="orderTable"><thead><tr><th>Order</th><th>Status</th><th>Delivery Partner</th><th>Actions</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="panel">
+        <h3>Manage Users</h3>
+        <table id="userTable"><thead><tr><th>Name</th><th>Role</th><th>Actions</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div id="editDeliveryModal" class="modal">
+      <div class="modal-content">
+          <h3 style="color:#2887ff;">Edit Delivery Boy</h3>
+          <form onsubmit="updateDeliveryBoy(event)">
+              <input type="hidden" id="editOrderId">
+              <label>Partner Name:</label><input type="text" id="editDelName" required>
+              <label>Partner Phone:</label><input type="text" id="editDelPhone" required>
+              <button type="submit" class="btn-sm bg-blue" style="width:100%;">Update Assignment</button>
+              <button type="button" class="btn-sm bg-red" style="width:100%; margin-top:5px;" onclick="document.getElementById('editDeliveryModal').style.display='none'">Cancel</button>
+          </form>
+      </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+    import { getFirestore, doc, updateDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJjDPtbbgw0fvQgB2Zl2SlbX56jY8pd1I",
+      authDomain: "foodmitra-2006.firebaseapp.com",
+      projectId: "foodmitra-2006",
+      storageBucket: "foodmitra-2006.firebasestorage.app",
+      messagingSenderId: "983778537017",
+      appId: "1:983778537017:web:20634d91ea94065b9267e8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    window.logoutUser = () => signOut(auth);
+
+    onAuthStateChanged(auth, (user) => {
+        if (!user) { window.location.href = "index.html"; } else { loadOrders(); loadUsers(); }
+    });
+
+    function loadOrders() {
+        onSnapshot(collection(db, "orders"), (snapshot) => {
+            const tbody = document.querySelector("#orderTable tbody"); tbody.innerHTML = "";
+            snapshot.forEach(d => {
+                const o = d.data();
+                const pName = o.delivery_partner_name ? o.delivery_partner_name + "<br><small>" + o.delivery_partner_phone + "</small>" : "<em>Unassigned</em>";
+                let actionBtn = (o.status === 'accepted' || o.status === 'out_for_delivery') ? `<button class="btn-sm bg-blue" onclick="openEditDelivery('${d.id}', '${o.delivery_partner_name||''}', '${o.delivery_partner_phone||''}')">Edit Delivery</button>` : '';
+
+                tbody.innerHTML += `<tr><td>${o.product_name} (${o.quantity}kg) to ${o.vendor_name}</td><td><b>${o.status.toUpperCase()}</b></td><td>${pName}</td><td>${actionBtn} <button class="btn-sm bg-red" onclick="deleteOrder('${d.id}')">Del</button></td></tr>`;
+            });
+        });
+    }
+
+    window.openEditDelivery = (id, name, phone) => {
+        document.getElementById('editOrderId').value = id;
+        document.getElementById('editDelName').value = name;
+        document.getElementById('editDelPhone').value = phone;
+        document.getElementById('editDeliveryModal').style.display = 'flex';
+    }
+
+    window.updateDeliveryBoy = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editOrderId').value;
+        await updateDoc(doc(db, "orders", id), {
+            delivery_partner_name: document.getElementById('editDelName').value,
+            delivery_partner_phone: document.getElementById('editDelPhone').value,
+            status: 'out_for_delivery'
+        });
+        document.getElementById('editDeliveryModal').style.display = 'none';
+    }
+
+    function loadUsers() {
+        onSnapshot(collection(db, "users"), (snapshot) => {
+            const tbody = document.querySelector("#userTable tbody"); tbody.innerHTML = "";
+            snapshot.forEach(d => {
+                const u = d.data();
+                tbody.innerHTML += `<tr><td>${u.name} <br><small>${u.email}</small></td><td><b>${u.role.toUpperCase()}</b></td><td><button class="btn-sm bg-red" onclick="deleteUser('${d.id}')">Del</button></td></tr>`;
+            });
+        });
+    }
+
+    window.deleteOrder = async (id) => { if(confirm("Delete Order?")) await deleteDoc(doc(db, "orders", id)); }
+    window.deleteUser = async (id) => { if(confirm("Delete User?")) await deleteDoc(doc(db, "users", id)); }
+  </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><title>Delivery Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "Poppins", sans-serif; background: #f1f7ff; margin: 0; min-height: 100vh; }
+    .nav-bar { width: 100%; background: #2887ff; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; color:white;}
+    .nav-links a { color: white; text-decoration: none; font-weight: 600; margin-right: 15px; cursor: pointer; }
+    .section-view { max-width: 900px; margin: 2rem auto; padding: 0 20px; }
+    .list-item { background: #fff; margin-bottom: 15px; padding: 1.5rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
+  </style>
+</head>
+<body>
+  <div class="nav-bar">
+      <span style="font-size:1.5rem; font-family:'Pacifico';">FoodMitra</span>
+      <div class="nav-links">
+          <a href="index.html">Menu</a>
+          <a onclick="showSection('pool')">Available</a>
+          <a onclick="showSection('my_deliveries')">My Jobs</a>
+          <a onclick="logoutUser()" style="background:rgba(255,255,255,0.2); padding:5px 15px; border-radius:20px;">Logout</a>
+      </div>
+  </div>
+
+  <div id="poolSection" class="section-view">
+      <h2 style="color:#2887ff;">Available for Pickup</h2><div id="poolList"></div>
+  </div>
+
+  <div id="myDeliveriesSection" class="section-view" style="display:none;">
+      <h2 style="color:#2887ff;">Active Deliveries</h2><div id="myDeliveriesList"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJjDPtbbgw0fvQgB2Zl2SlbX56jY8pd1I",
+      authDomain: "foodmitra-2006.firebaseapp.com",
+      projectId: "foodmitra-2006",
+      storageBucket: "foodmitra-2006.firebasestorage.app",
+      messagingSenderId: "983778537017",
+      appId: "1:983778537017:web:20634d91ea94065b9267e8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    let currentUser = null;
+    let myName = "", myPhone = "";
+
+    window.logoutUser = () => signOut(auth);
+    window.showSection = (s) => { 
+        document.getElementById('poolSection').style.display = s==='pool'?'block':'none'; 
+        document.getElementById('myDeliveriesSection').style.display = s==='my_deliveries'?'block':'none'; 
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { window.location.href = "index.html"; }
+        else {
+            currentUser = user;
+            const docSnap = await getDoc(doc(db, "users", user.uid));
+            if(docSnap.exists()) { myName = docSnap.data().name; myPhone = docSnap.data().phone; }
+            loadPool(); loadMyDeliveries();
+        }
+    });
+
+    function loadPool() {
+        const q = query(collection(db, "orders"), where("status", "==", "accepted"));
+        onSnapshot(q, (snapshot) => {
+            const list = document.getElementById("poolList"); list.innerHTML = "";
+            snapshot.forEach(d => {
+                const o = d.data();
+                list.innerHTML += `<div class="list-item"><div><h4>Pickup: ${o.supplier_name}</h4><p>Dropoff: ${o.vendor_name}</p><small>${o.address}</small></div><div><button onclick="claimOrder('${d.id}')" style="background:green; color:white; border:none; padding:10px;">Claim Delivery</button></div></div>`;
+            });
+        });
+    }
+
+    window.claimOrder = async (id) => {
+        if(confirm("Accept job?")) {
+            await updateDoc(doc(db, "orders", id), { status: 'out_for_delivery', delivery_partner_id: currentUser.uid, delivery_partner_name: myName, delivery_partner_phone: myPhone });
+            alert("Claimed!");
+        }
+    }
+
+    function loadMyDeliveries() {
+        const q = query(collection(db, "orders"), where("delivery_partner_id", "==", currentUser.uid), where("status", "==", "out_for_delivery"));
+        onSnapshot(q, (snapshot) => {
+            const list = document.getElementById("myDeliveriesList"); list.innerHTML = "";
+            snapshot.forEach(d => {
+                const o = d.data();
+                list.innerHTML += `<div class="list-item" style="border-left: 5px solid #2887ff;"><div><h4>To: ${o.vendor_name}</h4><p>${o.address}</p><small>${o.quantity}kg ${o.product_name}</small></div><div><button onclick="markDelivered('${d.id}')" style="background:#2887ff; color:white; border:none; padding:10px;">Mark Delivered</button></div></div>`;
+            });
+        });
+    }
+
+    window.markDelivered = async (id) => {
+        if(confirm("Delivered?")) { await updateDoc(doc(db, "orders", id), { status: 'delivered' }); }
+    }
+  </script>
+</body>
+</html>

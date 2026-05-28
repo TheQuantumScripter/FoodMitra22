@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css" />
+    
+    <title>Food Mitra</title>
+    
+    <style>
+      /* --- BASE STYLES --- */
+      body { font-family: 'Poppins', sans-serif; margin: 0; }
+      #ingredientsList > div, #supplierList > div { font-family: 'Poppins', sans-serif; }
+      
+      .profile-btn { 
+          display: flex; align-items: center; gap: 10px; 
+          background: white; color: #2887ff; padding: 5px 15px; 
+          border-radius: 30px; cursor: pointer; border: 1px solid #2887ff; 
+          text-decoration: none; font-weight: 600; transition: 0.3s;
+      }
+      .profile-btn:hover { background: #f1f7ff; }
+
+      /* --- GLASSMORPHISM & 3-CARD UI STYLES --- */
+      .glass-card {
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(15px);
+          -webkit-backdrop-filter: blur(15px);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+          border-radius: 16px;
+          padding: 30px;
+          text-align: center;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .role-cards-container {
+          display: flex;
+          gap: 20px;
+          justify-content: center;
+          align-items: center;
+          flex-wrap: wrap; 
+      }
+
+      .role-card {
+          width: 220px;
+          cursor: pointer;
+          color: white;
+      }
+      .role-card:hover {
+          transform: translateY(-10px);
+          box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+      }
+      .role-card h1 { font-size: 3.5rem; margin-bottom: 10px; }
+      .role-card h3 { font-size: 1.2rem; font-weight: 600; margin-bottom: 5px; }
+
+      /* Theme Colors */
+      .theme-vendor { background: rgba(135, 206, 235, 0.85); color: #000; } /* Sky Blue */
+      .theme-supplier { background: rgba(244, 196, 48, 0.85); color: #000; } /* Saffron */
+      .theme-delivery { background: rgba(30, 30, 30, 0.85); color: #fff; } /* Black */
+
+      /* Input styling for themed forms */
+      .theme-vendor input, .theme-supplier input, .theme-vendor textarea, .theme-supplier textarea { border: 1px solid #555; }
+      .theme-delivery input, .theme-delivery textarea { border: 1px solid #888; background: rgba(255,255,255,0.9); }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="nav__header">
+        <div class="nav__logo"><a href="#" class="logo">FoodMitra</a></div>
+      </div>
+      <ul class="nav__links" id="nav-links">
+        <li><a href="#home">HOME</a></li>
+        <li><a href="#about">ABOUT</a></li>
+        <li><a href="#ingredients">INGREDIENTS</a></li>
+        <li><a href="#suppliers">SUPPLIERS</a></li>
+      </ul>
+      
+      <div class="nav__btns">
+        <div id="loggedOutBtns">
+            <button class="btn" onclick="openAuthModal()" style="background-color: #2887ff;">Login / Register</button>
+        </div>
+        <div id="loggedInBtns" style="display:none; align-items:center;">
+            <a id="dashboardLink" href="#" class="profile-btn">Go to Dashboard</a>
+            <button class="btn" onclick="logoutUser()" style="background:#ff4d4d; margin-left:10px;">Logout</button>
+        </div>
+      </div>
+    </nav>
+
+    <header id="home"><div class="header__content-wrapper"><div class="header__content"><p>Simplifying Street Food Sourcing</p><h1>Connecting Vendors with Trusted Suppliers</h1></div></div></header>
+
+   <section id="about" class="section__container" style="background-color: #f9fbff; padding: 6rem 1rem; text-align: center;">
+      
+      <h2 class="section__header" style="color: #2887ff; font-size: 4.5rem; margin-bottom: 2rem;">Who We Are</h2>
+      
+      <p class="section__description" style="font-size: 1.6rem; line-height: 2.8rem; margin-top: 1rem; max-width: 900px; margin-inline: auto; color:#333;">
+        <span style="font-weight: bold; color: #0a0a0a;">FoodMitra</span> is a
+        <span style="color: #2887ff; font-weight: bold;">lifeline for street food vendors</span>
+        in India. We help you find <span style="color: green; font-weight: 600;">trusted, affordable suppliers</span>
+        for raw materials like rice, oil, vegetables, and masalas.
+      </p>
+      
+      <p class="section__description" style="font-size: 1.5rem; line-height: 2.6rem; margin-top: 2rem; max-width: 900px; margin-inline: auto; color:#555;">
+        Whether you serve <span style="color: #e65100; font-weight:600;">pani puri</span>, <span style="color: #ff5722; font-weight:600;">vada pav</span>, or
+        <span style="color: #4caf50; font-weight:600;">idli dosa</span>, we make sure your ingredients are fresh and your business runs
+        smoother than ever.
+      </p>
+      
+    </section>
+
+    <section class="section__container" id="ingredients">
+      <h2 class="section__header">Ingredients</h2>
+      <div id="ingredientsList">Loading ingredients from Firebase...</div>
+    </section>
+    
+    <section class="section__container" id="suppliers">
+      <h2 class="section__header">Suppliers</h2>
+      <div id="supplierList">Loading suppliers from Firebase...</div>
+    </section>
+
+    <footer id="contact">
+      <div class="section__container footer__container">
+        <div class="footer__col">
+          <div class="footer__logo"><a href="#" class="logo">FoodMitra</a></div>
+          <p>
+            Empowering vendors by connecting them with trusted suppliers.<br />
+            Easy sourcing, better business.
+          </p>
+        </div>
+
+        <div class="footer__col">
+          <h4>Quick Links</h4>
+          <ul class="footer__links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#ingredients">Ingredients</a></li>
+            <li><a href="#suppliers">Suppliers</a></li>
+          </ul>
+        </div>
+
+        <div class="footer__col">
+          <h4>Contact</h4>
+          <ul class="footer__links">
+            <li><a href="#"><i class="ri-phone-fill"></i> +91 98765 43210</a></li>
+            <li><a href="#"><i class="ri-mail-line"></i> info@foodmitra.in</a></li>
+            <li><a href="#"><i class="ri-map-pin-2-fill"></i> Kopargaon, Maharashtra, India</a></li>
+          </ul>
+        </div>
+
+        <div class="footer__col footer__team">
+          <h4>Our Team</h4>
+          <div class="team__grid">
+            <div class="team__member">
+              <img src="img/sk.jpg" alt="Saish" />
+              <p class="member__name">Saish Kulkarni</p>
+              <div class="team__socials">
+                <a href="https://www.linkedin.com/in/saish-kulkarni-384776320" target="_blank"><i class="ri-linkedin-box-fill"></i></a>
+                <a href="https://github.com/TheQuantumScripter" target="_blank"><i class="ri-github-fill"></i></a>
+              </div>
+            </div>
+            <div class="team__member">
+              <img src="img/jp.jpeg" alt="jaid" />
+              <p class="member__name">Jaid Pathan</p>
+              <div class="team__socials">
+                <a href="https://www.linkedin.com" target="_blank"><i class="ri-linkedin-box-fill"></i></a>
+                <a href="https://github.com" target="_blank"><i class="ri-github-fill"></i></a>
+              </div>
+            </div>
+            <div class="team__member">
+              <img src="img/as.jpeg" alt="Alpesh" />
+              <p class="member__name">Alpesh Savale</p>
+              <div class="team__socials">
+                <a href="https://linkedin.com" target="_blank"><i class="ri-linkedin-box-fill"></i></a>
+                <a href="https://github.com" target="_blank"><i class="ri-github-fill"></i></a>
+              </div>
+            </div>
+            
+            <div class="team__member">
+              <img src="img/ar.jpeg" alt="atharv" onerror="this.src='https://via.placeholder.com/60'" />
+              <p class="member__name">Atharv Rokde</p>
+              <div class="team__socials">
+                <a href="https://linkedin.com" target="_blank"><i class="ri-linkedin-box-fill"></i></a>
+                <a href="https://github.com" target="_blank"><i class="ri-github-fill"></i></a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="footer__bar">© 2025-2026 FoodMitra. All rights reserved.</div>
+      <div class="footer__bar">An E-Com By A Team of Foodies</div>
+    </footer>
+
+    <div id="authModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0, 0, 0, 0.6); justify-content:center; align-items:center; z-index:1000; overflow-y:auto; padding: 20px;">
+      
+      <div id="loginBox" class="glass-card" style="width:340px; background: rgba(255,255,255,0.9);">
+        <h3 style="margin-bottom:20px; font-size:1.5rem; color:#2887ff;">Login</h3>
+        <form onsubmit="submitAuth(event, 'login')">
+            <input id="loginEmail" type="email" placeholder="Email" required style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ccc; border-radius:5px;" />
+            <input id="loginPassword" type="password" placeholder="Password" required style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #ccc; border-radius:5px;" />
+            <button type="submit" class="btn" style="width:100%; margin-bottom:10px; padding:12px;">Login</button>
+            <button type="button" class="btn" style="background:#888; width:100%; padding:12px;" onclick="closeModal()">Cancel</button>
+        </form>
+        <p onclick="showRoleSelection()" style="cursor:pointer; margin-top:20px; color:#2887ff; font-weight:600;">Don't have an account? Register</p>
+      </div>
+
+      <div id="roleSelectionBox" style="display:none;">
+          <h2 style="color:white; text-align:center; margin-bottom: 30px; font-size: 2rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Join FoodMitra As...</h2>
+          <div class="role-cards-container">
+              <div class="glass-card role-card theme-vendor" onclick="openRegistrationForm('vendor')">
+                  <h1>🧑‍🍳</h1>
+                  <h3>Food Vendor</h3>
+                  <p style="font-size: 0.9rem; margin-top:10px; opacity: 0.8;">Buy ingredients & manage your stall.</p>
+              </div>
+              <div class="glass-card role-card theme-supplier" onclick="openRegistrationForm('supplier')">
+                  <h1>📦</h1>
+                  <h3>Wholesale Supplier</h3>
+                  <p style="font-size: 0.9rem; margin-top:10px; opacity: 0.8;">List products & receive bulk orders.</p>
+              </div>
+              <div class="glass-card role-card theme-delivery" onclick="openRegistrationForm('delivery')">
+                  <h1>🛵</h1>
+                  <h3>Delivery Partner</h3>
+                  <p style="font-size: 0.9rem; margin-top:10px; opacity: 0.8;">Deliver orders & earn money.</p>
+              </div>
+          </div>
+          <div style="text-align:center; margin-top: 30px;">
+              <button class="btn" style="background:rgba(255,255,255,0.2); color:white; padding:10px 30px;" onclick="showLogin()">Back to Login</button>
+          </div>
+      </div>
+
+      <div id="regFormBox" class="glass-card" style="display:none; width:360px;">
+        <h1 id="regIcon" style="font-size:3rem; margin-bottom:10px;"></h1>
+        <h3 id="regTitle" style="margin-bottom:20px; font-size:1.5rem;">Register</h3>
+        <form onsubmit="submitAuth(event, 'register')">
+            <input type="hidden" id="regRole" />
+            <input id="regName" type="text" placeholder="Full Name" required style="width:100%; padding:12px; margin-bottom:10px; border-radius:5px; border:none;" />
+            <input id="regBusiness" type="text" placeholder="Business Name / Vehicle No." required style="width:100%; padding:12px; margin-bottom:10px; border-radius:5px; border:none;" />
+            <input id="regPhone" type="tel" placeholder="Phone Number" required style="width:100%; padding:12px; margin-bottom:10px; border-radius:5px; border:none;" />
+            <textarea id="regAddress" placeholder="Full Address" required style="width:100%; padding:12px; margin-bottom:10px; border-radius:5px; border:none;"></textarea>
+            <input id="regEmail" type="email" placeholder="Email Address" required style="width:100%; padding:12px; margin-bottom:10px; border-radius:5px; border:none;" />
+            <input id="regPassword" type="password" placeholder="Create Password" required style="width:100%; padding:12px; margin-bottom:15px; border-radius:5px; border:none;" />
+            
+            <button type="submit" class="btn" style="width:100%; margin-bottom:10px; padding:12px; background:white; color:#333; font-weight:bold;">Create Account</button>
+            <button type="button" class="btn" style="background:rgba(0,0,0,0.3); color:white; width:100%; padding:12px;" onclick="showRoleSelection()">Go Back</button>
+        </form>
+      </div>
+
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+      import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+      import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+      // 1. Firebase Configuration (Your specific config)
+      const firebaseConfig = {
+        apiKey: "AIzaSyDJjDPtbbgw0fvQgB2Zl2SlbX56jY8pd1I",
+        authDomain: "foodmitra-2006.firebaseapp.com",
+        projectId: "foodmitra-2006",
+        storageBucket: "foodmitra-2006.firebasestorage.app",
+        messagingSenderId: "983778537017",
+        appId: "1:983778537017:web:20634d91ea94065b9267e8"
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // --- UI NAVIGATION FUNCTIONS ---
+      // Because we use type="module", we must attach functions to the window object so HTML buttons can click them.
+      
+      window.openAuthModal = function() {
+        document.getElementById("authModal").style.display = "flex";
+        window.showLogin();
+      }
+
+      window.closeModal = function() { 
+        document.getElementById("authModal").style.display = "none"; 
+      }
+
+      window.showLogin = function() {
+        document.getElementById("loginBox").style.display = "block";
+        document.getElementById("roleSelectionBox").style.display = "none";
+        document.getElementById("regFormBox").style.display = "none";
+      }
+
+      window.showRoleSelection = function() {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("roleSelectionBox").style.display = "flex";
+        document.getElementById("roleSelectionBox").style.flexDirection = "column";
+        document.getElementById("regFormBox").style.display = "none";
+      }
+
+      window.openRegistrationForm = function(role) {
+        document.getElementById("roleSelectionBox").style.display = "none";
+        const regBox = document.getElementById("regFormBox");
+        regBox.style.display = "block";
+        
+        // Clear previous themes
+        regBox.classList.remove('theme-vendor', 'theme-supplier', 'theme-delivery');
+        
+        // Apply selected theme
+        document.getElementById("regRole").value = role;
+        if (role === 'vendor') {
+            regBox.classList.add('theme-vendor');
+            document.getElementById("regIcon").innerText = "🧑‍🍳";
+            document.getElementById("regTitle").innerText = "Vendor Registration";
+        } else if (role === 'supplier') {
+            regBox.classList.add('theme-supplier');
+            document.getElementById("regIcon").innerText = "📦";
+            document.getElementById("regTitle").innerText = "Supplier Registration";
+        } else if (role === 'delivery') {
+            regBox.classList.add('theme-delivery');
+            document.getElementById("regIcon").innerText = "🛵";
+            document.getElementById("regTitle").innerText = "Delivery Registration";
+        }
+      }
+
+      // --- AUTHENTICATION LOGIC ---
+      window.submitAuth = async function(e, actionType) {
+        e.preventDefault();
+        
+        try {
+            if (actionType === 'register') {
+                const email = document.getElementById("regEmail").value;
+                const pass = document.getElementById("regPassword").value;
+                const role = document.getElementById("regRole").value;
+                
+                // 1. Create the user in Firebase Authentication
+                const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+                
+                // 2. Save their profile details in Firestore Database
+                await setDoc(doc(db, "users", userCred.user.uid), {
+                    name: document.getElementById("regName").value,
+                    business_name: document.getElementById("regBusiness").value,
+                    phone: document.getElementById("regPhone").value,
+                    address: document.getElementById("regAddress").value,
+                    role: role,
+                    email: email,
+                    created_at: serverTimestamp()
+                });
+                
+                alert("Registration Successful!");
+                window.closeModal();
+                
+            } else if (actionType === 'login') {
+                const email = document.getElementById("loginEmail").value;
+                const pass = document.getElementById("loginPassword").value;
+                
+                // Log them in
+                await signInWithEmailAndPassword(auth, email, pass);
+                window.closeModal();
+            }
+        } catch (error) {
+            alert("Error: " + error.message);
+        }
+      }
+
+      window.logoutUser = function() { 
+          signOut(auth); 
+      }
+
+      // --- LOGIN STATE LISTENER ---
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // User is signed in. Fetch their role to know which dashboard to send them to.
+            const userSnap = await getDoc(doc(db, "users", user.uid));
+            if (userSnap.exists()) {
+                const role = userSnap.data().role;
+                document.getElementById('loggedOutBtns').style.display = 'none';
+                document.getElementById('loggedInBtns').style.display = 'flex';
+                
+                const dashLink = document.getElementById('dashboardLink');
+                dashLink.href = role + ".html"; // e.g., 'vendor.html', 'supplier.html', 'delivery.html'
+                dashLink.innerText = "Go to " + role.charAt(0).toUpperCase() + role.slice(1) + " Panel";
+            }
+        } else {
+            // User is logged out.
+            document.getElementById('loggedOutBtns').style.display = 'block';
+            document.getElementById('loggedInBtns').style.display = 'none';
+        }
+      });
+
+      // --- FETCH DATA FOR HOMEPAGE ---
+      // Load public ingredients
+      onSnapshot(collection(db, "products"), (snapshot) => {
+          const list = document.getElementById("ingredientsList");
+          list.innerHTML = "";
+          snapshot.forEach((doc) => {
+              const d = doc.data();
+              list.innerHTML += `<div style="background:white; padding:15px; margin-bottom:10px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1)">
+                <b>${d.name}</b> (${d.category}) - <span style="color:green; font-weight:bold;">₹${d.price}/kg</span>
+              </div>`;
+          });
+      });
+
+      // Load public suppliers
+      const supplierQuery = query(collection(db, "users"), where("role", "==", "supplier"));
+      onSnapshot(supplierQuery, (snapshot) => {
+          const list = document.getElementById("supplierList");
+          list.innerHTML = "";
+          snapshot.forEach((doc) => {
+              const d = doc.data();
+              list.innerHTML += `<div style="background:white; padding:15px; margin-bottom:10px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1)">
+                <b>${d.business_name}</b> <br><span style="color:#555"><i class="ri-user-line"></i> ${d.name} | <i class="ri-phone-line"></i> ${d.phone}</span>
+              </div>`;
+          });
+      });
+    </script>
+  </body>
+</html>

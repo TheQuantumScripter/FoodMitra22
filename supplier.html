@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><title>Supplier Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "Poppins", sans-serif; background: #f1f7ff; margin: 0; min-height: 100vh;}
+    .nav-bar { width: 100%; background: #2887ff; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; color:white; }
+    .nav-links a { color: white; text-decoration: none; font-weight: 600; margin-right: 15px; cursor: pointer; }
+    .section-view { width: 90%; max-width: 800px; margin: 2rem auto; }
+    .form-container { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+    input, select, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; }
+    .list-item { background: #fff; margin-bottom: 15px; padding: 1.5rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
+    .btn { background: #2887ff; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="nav-bar">
+      <span style="font-size: 1.5rem; font-family: 'Pacifico';">FoodMitra</span>
+      <div class="nav-links">
+          <a href="index.html">Menu</a>
+          <a onclick="showSection('products')">My Products</a>
+          <a onclick="showSection('orders')">Orders</a>
+          <a onclick="logoutUser()" style="background:rgba(255,255,255,0.2); padding:5px 15px; border-radius:20px;">Logout</a>
+      </div>
+  </div>
+
+  <div id="productsSection" class="section-view">
+      <div class="form-container">
+        <h2>Add Product</h2>
+        <form onsubmit="addProduct(event)">
+            <input id="productName" type="text" placeholder="Name" required>
+            <input id="productPrice" type="number" placeholder="Price/kg" required>
+            <select id="productCategory">
+                <option value="Vegetables">Vegetables</option><option value="Grains">Grains</option><option value="Oil">Oil</option><option value="Spices">Spices</option>
+            </select>
+            <button type="submit" class="btn" style="width:100%;">Add</button>
+        </form>
+      </div>
+      <h3 style="margin-top:30px;">Inventory</h3><div id="productList"></div>
+  </div>
+
+  <div id="ordersSection" class="section-view" style="display:none;">
+      <h3>Incoming Orders</h3><div id="orderList"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJjDPtbbgw0fvQgB2Zl2SlbX56jY8pd1I",
+      authDomain: "foodmitra-2006.firebaseapp.com",
+      projectId: "foodmitra-2006",
+      storageBucket: "foodmitra-2006.firebasestorage.app",
+      messagingSenderId: "983778537017",
+      appId: "1:983778537017:web:20634d91ea94065b9267e8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    let currentUser = null;
+    let supplierName = "";
+
+    window.logoutUser = () => signOut(auth);
+    window.showSection = (s) => { 
+        document.getElementById('productsSection').style.display = s==='products'?'block':'none'; 
+        document.getElementById('ordersSection').style.display = s==='orders'?'block':'none'; 
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { window.location.href = "index.html"; }
+        else {
+            currentUser = user;
+            const docSnap = await getDoc(doc(db, "users", user.uid));
+            if(docSnap.exists()) { supplierName = docSnap.data().business_name; }
+            loadProducts();
+            loadOrders();
+        }
+    });
+
+    window.addProduct = async (e) => {
+      e.preventDefault(); 
+      await addDoc(collection(db, "products"), {
+          name: document.getElementById("productName").value,
+          price: document.getElementById("productPrice").value,
+          category: document.getElementById("productCategory").value,
+          supplier_id: currentUser.uid,
+          supplier_name: supplierName
+      });
+      document.querySelector("form").reset();
+    }
+
+    function loadProducts() {
+      const q = query(collection(db, "products"), where("supplier_id", "==", currentUser.uid));
+      onSnapshot(q, (snapshot) => {
+          const c = document.getElementById("productList"); c.innerHTML = "";
+          snapshot.forEach(d => {
+            const p = d.data();
+            c.innerHTML += `<div class="list-item"><div><strong>${p.name}</strong></div><div><span style="color:#2887ff; font-weight:bold;">₹${p.price}/kg</span><button onclick="deleteProduct('${d.id}')" style="background:red; color:white; border:none; padding:5px; margin-left:10px; cursor:pointer;">Del</button></div></div>`;
+          });
+        });
+    }
+
+    window.deleteProduct = async (id) => { 
+        if(confirm("Remove?")) { await deleteDoc(doc(db, "products", id)); } 
+    }
+
+    function loadOrders() {
+        const q = query(collection(db, "orders"), where("supplier_id", "==", currentUser.uid));
+        onSnapshot(q, (snapshot) => {
+            const list = document.getElementById("orderList"); list.innerHTML = "";
+            snapshot.forEach(d => {
+                const o = d.data();
+                let controls = '';
+                if (o.status === 'pending') {
+                    controls = `<button onclick="submitAccept('${d.id}')" style="background:green; color:white; border:none; padding:5px;">Accept</button> <button onclick="rejectOrder('${d.id}')" style="background:red; color:white; border:none; padding:5px;">Reject</button>`;
+                } else {
+                    controls = `<span style="font-weight:bold; color:#2887ff;">${o.status.toUpperCase()}</span>`;
+                }
+                list.innerHTML += `<div class="list-item"><div><h4>${o.product_name} (${o.quantity}kg)</h4><p>${o.vendor_name} | Offer: ₹${o.offer_price}</p></div><div style="text-align:right;">${controls}</div></div>`;
+            });
+        });
+    }
+
+    window.submitAccept = async (id) => { await updateDoc(doc(db, "orders", id), { status: 'accepted' }); }
+    window.rejectOrder = async (id) => { if(confirm("Reject?")) await updateDoc(doc(db, "orders", id), { status: 'rejected' }); }
+  </script>
+</body>
+</html>
