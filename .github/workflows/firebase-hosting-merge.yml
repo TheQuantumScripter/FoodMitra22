@@ -14,7 +14,9 @@ jobs:
       - run: npm ci
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FOODMITRA_2006 }}
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: ''
           channelId: live
           projectId: foodmitra-2006
+        env:
+          FIREBASE_TOKEN: '${{ secrets.FIREBASE_TOKEN }}'
