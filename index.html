@@ -17,6 +17,11 @@
       body { font-family: 'Poppins', sans-serif; margin: 0; }
       #ingredientsList > div, #supplierList > div { font-family: 'Poppins', sans-serif; }
       
+      .password-container { position: relative; width: 100%; }
+.toggle-password {
+    position: absolute; right: 10px; top: 35%; transform: translateY(-50%);
+    cursor: pointer; color: #888; font-size: 1.2rem;
+}
       .profile-btn { 
           display: flex; align-items: center; gap: 10px; 
           background: white; color: #2887ff; padding: 5px 15px; 
@@ -202,7 +207,10 @@
         <h3 style="margin-bottom:20px; font-size:1.5rem; color:#2887ff;">Login</h3>
         <form onsubmit="submitAuth(event, 'login')">
             <input id="loginEmail" type="email" placeholder="Email" required style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ccc; border-radius:5px;" />
-            <input id="loginPassword" type="password" placeholder="Password" required style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #ccc; border-radius:5px;" />
+           <div class="password-container">
+    <input id="loginPassword" type="password" placeholder="Password" required style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #ccc; border-radius:5px;" />
+    <i class="ri-eye-line toggle-password" onclick="togglePassword('loginPassword')"></i>
+</div>
             <button type="submit" class="btn" style="width:100%; margin-bottom:10px; padding:12px;">Login</button>
             <button type="button" class="btn" style="background:#888; width:100%; padding:12px;" onclick="closeModal()">Cancel</button>
         </form>
@@ -243,7 +251,10 @@
             <input id="regPhone" type="tel" placeholder="Phone Number" required style="width:100%; padding:12px; margin-bottom:10px; border-radius:5px; border:none;" />
             <textarea id="regAddress" placeholder="Full Address" required style="width:100%; padding:12px; margin-bottom:10px; border-radius:5px; border:none;"></textarea>
             <input id="regEmail" type="email" placeholder="Email Address" required style="width:100%; padding:12px; margin-bottom:10px; border-radius:5px; border:none;" />
-            <input id="regPassword" type="password" placeholder="Create Password" required style="width:100%; padding:12px; margin-bottom:15px; border-radius:5px; border:none;" />
+            <div class="password-container">
+    <input id="regPassword" type="password" placeholder="Create Password" required style="width:100%; padding:12px; margin-bottom:15px; border-radius:5px; border:none;" />
+    <i class="ri-eye-line toggle-password" onclick="togglePassword('regPassword')"></i>
+</div>
             
             <button type="submit" class="btn" style="width:100%; margin-bottom:10px; padding:12px; background:white; color:#333; font-weight:bold;">Create Account</button>
             <button type="button" class="btn" style="background:rgba(0,0,0,0.3); color:white; width:100%; padding:12px;" onclick="showRoleSelection()">Go Back</button>
@@ -301,6 +312,7 @@
         document.getElementById("roleSelectionBox").style.display = "none";
         const regBox = document.getElementById("regFormBox");
         regBox.style.display = "block";
+        
         
         // Clear previous themes
         regBox.classList.remove('theme-vendor', 'theme-supplier', 'theme-delivery');
@@ -366,6 +378,20 @@
           signOut(auth); 
       }
 
+        window.togglePassword = function(id) {
+          const input = document.getElementById(id);
+          const icon = input.nextElementSibling;
+          if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("ri-eye-line");
+            icon.classList.add("ri-eye-off-line");
+          } else {
+            input.type = "password";
+            icon.classList.remove("ri-eye-off-line");
+            icon.classList.add("ri-eye-line");
+          }
+        };
+
       // --- LOGIN STATE LISTENER ---
       onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -377,8 +403,14 @@
                 document.getElementById('loggedInBtns').style.display = 'flex';
                 
                 const dashLink = document.getElementById('dashboardLink');
-                dashLink.href = role + ".html"; // e.g., 'vendor.html', 'supplier.html', 'delivery.html'
-                dashLink.innerText = "Go to " + role.charAt(0).toUpperCase() + role.slice(1) + " Panel";
+                // Admin specific redirect logic
+                if (role === 'admin') {
+                    dashLink.href = "admin.html";
+                    dashLink.innerText = "Admin Dashboard";
+                } else {
+                    dashLink.href = role + ".html";
+                    dashLink.innerText = "Go to " + role.charAt(0).toUpperCase() + role.slice(1) + " Panel";
+                }
             }
         } else {
             // User is logged out.

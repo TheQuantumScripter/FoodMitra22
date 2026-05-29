@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "foodmitra-2006"
-  }
+    "default": "foodmitra-2006",
+    "live": "foodmitra-2006"
+  },
+  "targets": {},
+  "etags": {}
 }

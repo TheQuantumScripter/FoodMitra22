@@ -51,7 +51,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-    import { getFirestore, doc, updateDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDJjDPtbbgw0fvQgB2Zl2SlbX56jY8pd1I",
@@ -68,8 +68,18 @@
 
     window.logoutUser = () => signOut(auth);
 
-    onAuthStateChanged(auth, (user) => {
-        if (!user) { window.location.href = "index.html"; } else { loadOrders(); loadUsers(); }
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { window.location.href = "index.html"; } else {
+            const userSnap = await getDoc(doc(db, "users", user.uid));
+            // Security Check: If not admin, kick them out
+            if (!userSnap.exists() || userSnap.data().role !== 'admin') {
+                alert("Access Denied: Admins only.");
+                window.location.href = "index.html";
+            } else {
+                loadOrders();
+                loadUsers();
+            }
+        }
     });
 
     function loadOrders() {
